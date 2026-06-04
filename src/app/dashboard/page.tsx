@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { 
   LogOut, Trophy, Settings, BarChart3, Loader2, TrendingUp, TrendingDown, 
   Activity, Zap, Eye, MoreVertical, ArrowUpRight, ArrowDownRight, Target,
-  Award, Calendar, AlertCircle, CheckCircle2
+  Award, Calendar, AlertCircle, CheckCircle2, BookOpen, DollarSign, Award as Certificate
 } from "lucide-react";
 
 interface UserProfile {
@@ -347,6 +347,84 @@ export default function DashboardPage() {
               <span>→</span>
             </div>
           </Link>
+        </div>
+
+        {/* Navigation Menu */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-white mb-6">Quick Navigation</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* Trade */}
+            <button className="group rounded-lg glass-panel border border-white/5 p-4 hover:border-primary/50 transition-all duration-300 hover:bg-primary/5 flex flex-col items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 group-hover:border-primary/50 transition-all">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-sm font-semibold text-white text-center">Trade</span>
+            </button>
+
+            {/* Certificate */}
+            <button className="group rounded-lg glass-panel border border-white/5 p-4 hover:border-emerald-500/50 transition-all duration-300 hover:bg-emerald-500/5 flex flex-col items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 group-hover:border-emerald-500/50 transition-all">
+                <Certificate className="h-5 w-5 text-emerald-400" />
+              </div>
+              <span className="text-sm font-semibold text-white text-center">Certificate</span>
+            </button>
+
+            {/* Leaderboard */}
+            <button className="group rounded-lg glass-panel border border-white/5 p-4 hover:border-blue-500/50 transition-all duration-300 hover:bg-blue-500/5 flex flex-col items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10 border border-blue-500/20 group-hover:border-blue-500/50 transition-all">
+                <Trophy className="h-5 w-5 text-blue-400" />
+              </div>
+              <span className="text-sm font-semibold text-white text-center">Leaderboard</span>
+            </button>
+
+            {/* Competition */}
+            <button className="group rounded-lg glass-panel border border-white/5 p-4 hover:border-yellow-500/50 transition-all duration-300 hover:bg-yellow-500/5 flex flex-col items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10 border border-yellow-500/20 group-hover:border-yellow-500/50 transition-all">
+                <Zap className="h-5 w-5 text-yellow-400" />
+              </div>
+              <span className="text-sm font-semibold text-white text-center">Competition</span>
+            </button>
+
+            {/* Deposit */}
+            <button className="group rounded-lg glass-panel border border-white/5 p-4 hover:border-green-500/50 transition-all duration-300 hover:bg-green-500/5 flex flex-col items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10 border border-green-500/20 group-hover:border-green-500/50 transition-all">
+                <ArrowDownRight className="h-5 w-5 text-green-400" />
+              </div>
+              <span className="text-sm font-semibold text-white text-center">Deposit</span>
+            </button>
+
+            {/* Withdraw */}
+            <button className="group rounded-lg glass-panel border border-white/5 p-4 hover:border-orange-500/50 transition-all duration-300 hover:bg-orange-500/5 flex flex-col items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 border border-orange-500/20 group-hover:border-orange-500/50 transition-all">
+                <ArrowUpRight className="h-5 w-5 text-orange-400" />
+              </div>
+              <span className="text-sm font-semibold text-white text-center">Withdraw</span>
+            </button>
+
+            {/* Challenges */}
+            <button className="group rounded-lg glass-panel border border-white/5 p-4 hover:border-pink-500/50 transition-all duration-300 hover:bg-pink-500/5 flex flex-col items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-500/10 border border-pink-500/20 group-hover:border-pink-500/50 transition-all">
+                <Target className="h-5 w-5 text-pink-400" />
+              </div>
+              <span className="text-sm font-semibold text-white text-center">Challenges</span>
+            </button>
+
+            {/* Rules */}
+            <button className="group rounded-lg glass-panel border border-white/5 p-4 hover:border-cyan-400/50 transition-all duration-300 hover:bg-cyan-400/5 flex flex-col items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-400/10 border border-cyan-400/20 group-hover:border-cyan-400/50 transition-all">
+                <AlertCircle className="h-5 w-5 text-cyan-300" />
+              </div>
+              <span className="text-sm font-semibold text-white text-center">Rules</span>
+            </button>
+
+            {/* Academy */}
+            <button className="group rounded-lg glass-panel border border-white/5 p-4 hover:border-purple-500/50 transition-all duration-300 hover:bg-purple-500/5 flex flex-col items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10 border border-purple-500/20 group-hover:border-purple-500/50 transition-all">
+                <BookOpen className="h-5 w-5 text-purple-400" />
+              </div>
+              <span className="text-sm font-semibold text-white text-center">Academy</span>
+            </button>
+          </div>
         </div>
       </div>
 
