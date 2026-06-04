@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Twitter, Youtube, Disc as Discord, MessageSquare } from "lucide-react";
+import { Activity, Mail, Music, Disc as Discord, Share2 } from "lucide-react";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -22,17 +22,17 @@ export default function Footer() {
               Empowering global traders with institutional scale capital. Trade up to $2,000,000, keep up to 90% profits.
             </p>
             <div className="flex gap-4 mt-2">
-              <a href="#" className="hover:text-primary transition-colors duration-200" aria-label="Twitter">
-                <Twitter className="h-5 w-5" />
+              <a href="#" className="hover:text-primary transition-colors duration-200" aria-label="Mail">
+                <Mail className="h-5 w-5" />
               </a>
               <a href="#" className="hover:text-primary transition-colors duration-200" aria-label="Discord">
                 <Discord className="h-5 w-5" />
               </a>
               <a href="#" className="hover:text-primary transition-colors duration-200" aria-label="YouTube">
-                <Youtube className="h-5 w-5" />
+                <Music className="h-5 w-5" />
               </a>
               <a href="#" className="hover:text-primary transition-colors duration-200" aria-label="Telegram">
-                <MessageSquare className="h-5 w-5" />
+                <Share2 className="h-5 w-5" />
               </a>
             </div>
           </div>
@@ -71,7 +71,7 @@ export default function Footer() {
               <li>
                 <Link href="/faq" className="hover:text-white transition-colors duration-200">
                   Frequently Asked Qs
-                </a>
+                </Link>
               </li>
               <li>
                 <Link href="/leaderboard" className="hover:text-white transition-colors duration-200">
