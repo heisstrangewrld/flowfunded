@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Activity, ChevronRight } from "lucide-react";
+import { Menu, X, Activity, ChevronRight, User, LogOut } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -16,6 +18,11 @@ export default function Navbar() {
     { name: "Leaderboard", href: "/leaderboard" },
     { name: "FAQ", href: "/faq" },
   ];
+
+  const handleLogout = async () => {
+    await logout();
+    setIsOpen(false);
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-white/5 bg-background/80 backdrop-blur-md">
@@ -53,23 +60,44 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons / User Menu */}
           <div className="hidden md:flex items-center gap-4">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-gray-400 hover:text-white transition-colors duration-200"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/#challenges"
-              className="relative inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-black bg-primary rounded-full hover:bg-primary/95 transition-all duration-200 shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:shadow-[0_0_25px_rgba(0,240,255,0.5)] group overflow-hidden"
-              id="cta-nav-start-challenge"
-            >
-              <span className="relative z-10 flex items-center gap-1">
-                Start Challenge <ChevronRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-              </span>
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors duration-200"
+                >
+                  <User className="h-4 w-4" />
+                  Dashboard
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors duration-200"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-gray-400 hover:text-white transition-colors duration-200"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/#challenges"
+                  className="relative inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-black bg-primary rounded-full hover:bg-primary/95 transition-all duration-200 shadow-[0_0_15px_rgba(0,240,255,0.3)] hover:shadow-[0_0_25px_rgba(0,240,255,0.5)] group overflow-hidden"
+                  id="cta-nav-start-challenge"
+                >
+                  <span className="relative z-10 flex items-center gap-1">
+                    Start Challenge <ChevronRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -102,30 +130,47 @@ export default function Navbar() {
                   className={`block rounded-md px-3 py-2 text-base font-medium transition-colors duration-200 ${
                     isActive
                       ? "bg-primary/10 text-primary"
-                      : "text-gray-400 hover:bg-gray-950 hover:text-white"
+                      : "text-gray-400 hover:bg-gray-900 hover:text-white"
                   }`}
                 >
                   {link.name}
                 </Link>
               );
             })}
-            <div className="mt-4 border-t border-white/5 pt-4 flex flex-col gap-3 px-3">
-              <Link
-                href="/login"
-                onClick={() => setIsOpen(false)}
-                className="text-center rounded-md py-2 text-base font-medium text-gray-400 hover:text-white transition-colors duration-200"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/#challenges"
-                onClick={() => setIsOpen(false)}
-                className="text-center rounded-full bg-primary py-2.5 text-base font-semibold text-black shadow-[0_0_15px_rgba(0,240,255,0.3)]"
-                id="cta-mobile-start-challenge"
-              >
-                Start Challenge
-              </Link>
-            </div>
+            {user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setIsOpen(false)}
+                  className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-900 hover:text-white transition-colors duration-200"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-900 hover:text-white transition-colors duration-200"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setIsOpen(false)}
+                  className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-900 hover:text-white transition-colors duration-200"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/#challenges"
+                  onClick={() => setIsOpen(false)}
+                  className="block rounded-md px-3 py-2 text-base font-semibold text-black bg-primary hover:bg-primary/95 transition-all duration-200 mt-2"
+                >
+                  Start Challenge
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}
