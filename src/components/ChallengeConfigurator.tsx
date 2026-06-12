@@ -116,7 +116,7 @@ export default function ChallengeConfigurator() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                   Profit Target
-                  <Info className="h-3.5 w-3.5 cursor-help hover:text-gray-400" title="Target percentage to complete the phase" />
+                  <span className="cursor-help text-gray-600 hover:text-gray-400 text-xs">ⓘ</span>
                 </div>
                 <p className="text-lg font-bold text-white mt-1">{activeChallenge.profitTarget}</p>
               </div>
@@ -124,7 +124,7 @@ export default function ChallengeConfigurator() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                   Max Drawdown
-                  <Info className="h-3.5 w-3.5 cursor-help hover:text-gray-400" title="Maximum aggregate loss allowed" />
+                  <span className="cursor-help text-gray-600 hover:text-gray-400 text-xs">ⓘ</span>
                 </div>
                 <p className="text-lg font-bold text-white mt-1">{activeChallenge.maxLoss}</p>
               </div>
@@ -132,7 +132,7 @@ export default function ChallengeConfigurator() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                   Daily Loss Limit
-                  <Info className="h-3.5 w-3.5 cursor-help hover:text-gray-400" title="Daily loss limit based on prior day balance" />
+                  <span className="cursor-help text-gray-600 hover:text-gray-400 text-xs">ⓘ</span>
                 </div>
                 <p className="text-lg font-bold text-white mt-1">{activeChallenge.dailyLoss}</p>
               </div>
@@ -140,7 +140,7 @@ export default function ChallengeConfigurator() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                   Profit Split
-                  <Info className="h-3.5 w-3.5 cursor-help hover:text-gray-400" title="Percent of profits credited to you" />
+                  <span className="cursor-help text-gray-600 hover:text-gray-400 text-xs">ⓘ</span>
                 </div>
                 <p className="text-lg font-bold text-white mt-1 text-primary">{activeChallenge.split}</p>
               </div>
@@ -148,7 +148,7 @@ export default function ChallengeConfigurator() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                   Leverage
-                  <Info className="h-3.5 w-3.5 cursor-help hover:text-gray-400" title="Maximum account leverage ratio" />
+                  <span className="cursor-help text-gray-600 hover:text-gray-400 text-xs">ⓘ</span>
                 </div>
                 <p className="text-lg font-bold text-white mt-1">{activeChallenge.leverage}</p>
               </div>
@@ -156,7 +156,7 @@ export default function ChallengeConfigurator() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                   Minimum Days
-                  <Info className="h-3.5 w-3.5 cursor-help hover:text-gray-400" title="Minimum calendar days required to trade" />
+                  <span className="cursor-help text-gray-600 hover:text-gray-400 text-xs">ⓘ</span>
                 </div>
                 <p className="text-lg font-bold text-white mt-1">0 Days (No limit)</p>
               </div>
