@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Info, ShieldAlert, Zap } from "lucide-react";
-import { motion } from "framer-motion";
+import { Check, ShieldAlert, Zap } from "lucide-react";
+import Link from "next/link";
 
 interface ChallengeOption {
   size: string;
@@ -116,7 +116,7 @@ export default function ChallengeConfigurator() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                   Profit Target
-                  <Info className="h-3.5 w-3.5 cursor-help hover:text-gray-400" title="Target percentage to complete the phase" />
+                  <span className="cursor-help text-gray-600 hover:text-gray-400 text-xs">ⓘ</span>
                 </div>
                 <p className="text-lg font-bold text-white mt-1">{activeChallenge.profitTarget}</p>
               </div>
@@ -124,7 +124,7 @@ export default function ChallengeConfigurator() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                   Max Drawdown
-                  <Info className="h-3.5 w-3.5 cursor-help hover:text-gray-400" title="Maximum aggregate loss allowed" />
+                  <span className="cursor-help text-gray-600 hover:text-gray-400 text-xs">ⓘ</span>
                 </div>
                 <p className="text-lg font-bold text-white mt-1">{activeChallenge.maxLoss}</p>
               </div>
@@ -132,7 +132,7 @@ export default function ChallengeConfigurator() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                   Daily Loss Limit
-                  <Info className="h-3.5 w-3.5 cursor-help hover:text-gray-400" title="Daily loss limit based on prior day balance" />
+                  <span className="cursor-help text-gray-600 hover:text-gray-400 text-xs">ⓘ</span>
                 </div>
                 <p className="text-lg font-bold text-white mt-1">{activeChallenge.dailyLoss}</p>
               </div>
@@ -140,7 +140,7 @@ export default function ChallengeConfigurator() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                   Profit Split
-                  <Info className="h-3.5 w-3.5 cursor-help hover:text-gray-400" title="Percent of profits credited to you" />
+                  <span className="cursor-help text-gray-600 hover:text-gray-400 text-xs">ⓘ</span>
                 </div>
                 <p className="text-lg font-bold text-white mt-1 text-primary">{activeChallenge.split}</p>
               </div>
@@ -148,7 +148,7 @@ export default function ChallengeConfigurator() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                   Leverage
-                  <Info className="h-3.5 w-3.5 cursor-help hover:text-gray-400" title="Maximum account leverage ratio" />
+                  <span className="cursor-help text-gray-600 hover:text-gray-400 text-xs">ⓘ</span>
                 </div>
                 <p className="text-lg font-bold text-white mt-1">{activeChallenge.leverage}</p>
               </div>
@@ -156,7 +156,7 @@ export default function ChallengeConfigurator() {
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                   Minimum Days
-                  <Info className="h-3.5 w-3.5 cursor-help hover:text-gray-400" title="Minimum calendar days required to trade" />
+                  <span className="cursor-help text-gray-600 hover:text-gray-400 text-xs">ⓘ</span>
                 </div>
                 <p className="text-lg font-bold text-white mt-1">0 Days (No limit)</p>
               </div>
@@ -199,12 +199,12 @@ export default function ChallengeConfigurator() {
           </div>
 
           <div className="mt-8">
-            <button
-              onClick={() => alert(`Starting Checkout flow for ${activeChallenge.size} Challenge: ${activeChallenge.fee}`)}
+            <Link
+              href={`/checkout?account=${encodeURIComponent(activeChallenge.size)}&fee=${encodeURIComponent(activeChallenge.fee)}`}
               className="w-full relative inline-flex items-center justify-center px-6 py-3.5 text-base font-semibold text-black bg-primary rounded-xl hover:bg-primary/95 transition-all duration-200 shadow-[0_0_20px_rgba(0,240,255,0.2)] hover:shadow-[0_0_30px_rgba(0,240,255,0.4)] cursor-pointer"
             >
               Start {activeChallenge.size} Challenge
-            </button>
+            </Link>
             <p className="text-[11px] text-gray-500 text-center mt-3">
               By clicking, you agree to our Terms & simulated trading guidelines.
             </p>
