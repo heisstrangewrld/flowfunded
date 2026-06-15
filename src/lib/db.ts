@@ -141,3 +141,44 @@ export function calcChallengeMetrics(challenge: Challenge) {
     isViolated,
   };
 }
+
+// ─── DEPOSITS ─────────────────────────────────────────────────────────────────
+
+import type { Deposit } from "@/types/database";
+
+export async function submitDeposit(payload: {
+  user_id: string;
+  account_size: string;
+  fee: string;
+  coin: Deposit["coin"];
+  tx_hash: string;
+  amount_claimed: number;
+}): Promise<Deposit> {
+  const { data, error } = await supabase
+    .from("deposits")
+    .insert({ ...payload, status: "pending" })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getUserDeposits(userId: string): Promise<Deposit[]> {
+  const { data, error } = await supabase
+    .from("deposits")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function hasPendingDeposit(userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("deposits")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("status", "pending")
+    .limit(1);
+  return (data ?? []).length > 0;
+}

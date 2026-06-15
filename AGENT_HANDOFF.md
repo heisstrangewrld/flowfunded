@@ -1,5 +1,5 @@
 # FlowFunded — Agent Handoff Document
-> Last updated: June 2026 | Status: Phase 2 Complete ✅
+> Last updated: June 2026 | Status: Phase 3 In Progress 🔄
 
 This document gives a new agent (Claude or otherwise) everything needed to understand the codebase and continue building without any prior conversation context.
 
@@ -30,9 +30,13 @@ git clone https://github.com/heisstrangewrld/flowfunded.git
 cd flowfunded
 npm install
 
-# Create .env.local with your Supabase credentials:
-echo "NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co" >> .env.local
-echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_ANON_KEY" >> .env.local
+# Create .env.local with your Supabase credentials + wallet addresses:
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_ANON_KEY
+PAYMENT_USDT_TRC20=YOUR_USDT_TRC20_WALLET
+PAYMENT_USDT_ERC20=YOUR_USDT_ERC20_WALLET
+PAYMENT_BTC=YOUR_BTC_WALLET
+PAYMENT_ETH=YOUR_ETH_WALLET
 
 npm run dev
 # Open http://localhost:3000
@@ -61,17 +65,25 @@ flowfunded/
     │   ├── page.tsx             ← Landing page (hero, challenge configurator, payout feed, FAQ CTA)
     │   ├── dashboard/
     │   │   └── page.tsx         ← Main trader dashboard (Phase 2 rebuilt — real data)
-    │   ├── login/page.tsx       ← Login form (Supabase email/password)
+    │   ├── login/page.tsx       ← Login form (Supabase email/password) — also routes admin to /admin
     │   ├── signup/page.tsx      ← Signup form
     │   ├── account/page.tsx     ← Account settings (stub — needs building)
+    │   ├── checkout/page.tsx    ← Crypto checkout flow (account size → wallet address → tx hash submit)
+    │   ├── admin/               ← Admin panel (role = 'admin' required)
+    │   │   ├── layout.tsx       ← Admin sidebar layout
+    │   │   ├── page.tsx         ← Admin dashboard (stats)
+    │   │   ├── users/page.tsx   ← All users table + ban/unban
+    │   │   ├── challenges/page.tsx ← All challenges + manual edit
+    │   │   ├── payouts/page.tsx ← Approve/reject payout requests
+    │   │   └── deposits/page.tsx ← Confirm crypto deposits, activate challenges
     │   ├── leaderboard/page.tsx ← Leaderboard (currently mock data)
     │   ├── faq/page.tsx         ← FAQ page (static)
     │   └── rules/page.tsx       ← Rules page (static)
     │
     ├── components/
-    │   ├── Navbar.tsx           ← Responsive navbar, auth-aware
+    │   ├── Navbar.tsx           ← Responsive navbar, auth-aware, quick actions in dropdown
     │   ├── Footer.tsx           ← Site footer
-    │   ├── ChallengeConfigurator.tsx ← Interactive pricing/challenge selector on landing page
+    │   ├── ChallengeConfigurator.tsx ← Interactive pricing/challenge selector — links to /checkout
     │   ├── LivePayoutFeed.tsx   ← Scrolling marquee of recent payouts (mock data)
     │   └── dashboard/
     │       ├── PerformanceChart.tsx  ← Recharts area chart (equity curve, 7D/14D/30D/ALL)
@@ -84,10 +96,10 @@ flowfunded/
     │
     ├── lib/
     │   ├── supabase.ts          ← Supabase client singleton
-    │   └── db.ts                ← All DB access helpers (challenges, trades, payouts, snapshots)
+    │   └── db.ts                ← All DB access helpers (challenges, trades, payouts, snapshots, deposits)
     │
     └── types/
-        └── database.ts          ← TypeScript types: Profile, Challenge, Trade, EquitySnapshot, Payout
+        └── database.ts          ← TypeScript types: Profile, Challenge, Trade, EquitySnapshot, Payout, Deposit
 ```
 
 ---
@@ -126,13 +138,38 @@ flowfunded/
 
 | Table | Purpose |
 |---|---|
-| `profiles` | User profile (name, country, payout wallet). Auto-created on signup via trigger. |
+| `profiles` | User profile (name, country, payout wallet, role). Auto-created on signup via trigger. |
 | `challenges` | Each purchased challenge (account size, phase, status, balances, drawdown limits) |
 | `trades` | Individual trade records linked to a challenge |
 | `equity_snapshots` | Daily balance/equity snapshots for the performance chart |
 | `payouts` | Payout requests with status tracking |
+| `deposits` | Crypto deposit submissions (tx hash, amount claimed, coin, status) |
 
-All tables have **Row Level Security (RLS)** — users can only see their own data.
+All tables have **Row Level Security (RLS)** — users can only see their own data. Admin reads all via service role.
+
+**Add `role` column to profiles:**
+```sql
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role text DEFAULT 'user';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_banned boolean DEFAULT false;
+
+-- Create deposits table
+CREATE TABLE IF NOT EXISTS public.deposits (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid REFERENCES auth.users ON DELETE CASCADE NOT NULL,
+  account_size text NOT NULL,
+  fee text NOT NULL,
+  coin text NOT NULL,          -- 'USDT_TRC20' | 'USDT_ERC20' | 'BTC' | 'ETH'
+  tx_hash text NOT NULL,
+  amount_claimed numeric NOT NULL,
+  status text DEFAULT 'pending', -- 'pending' | 'confirmed' | 'rejected'
+  admin_note text,
+  created_at timestamptz DEFAULT now(),
+  confirmed_at timestamptz
+);
+ALTER TABLE public.deposits ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users see own deposits" ON public.deposits FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users insert own deposits" ON public.deposits FOR INSERT WITH CHECK (auth.uid() = user_id);
+```
 
 **To seed test data after signing up:**
 ```sql
@@ -146,128 +183,139 @@ INSERT INTO public.challenges (
   0.08, 0.10, 0.05,
   50000, 52340, 52340
 );
+
+-- Make yourself admin:
+UPDATE public.profiles SET role = 'admin' WHERE id = 'YOUR-USER-UUID';
 ```
 
 ---
 
-## 6. Data Flow — How the Dashboard Works
+## 6. Payment System — Crypto Only (No Stripe)
 
+FlowFunded uses **manual crypto payments only**. No payment processor is integrated.
+
+**Supported coins:**
+- USDT (TRC20)
+- USDT (ERC20)
+- BTC (Bitcoin)
+- ETH (Ethereum)
+
+**Flow:**
+1. Trader clicks "Start Challenge" on landing page
+2. If not logged in → redirect to `/login?redirect=/checkout?account=...` → after login, back to checkout
+3. Trader selects coin, sees wallet address (from env vars), copies it
+4. Trader sends payment, then submits tx hash + amount on the checkout page
+5. Submission creates a row in `deposits` table with `status = 'pending'`
+6. Trader is redirected to `/dashboard` with a "Payment pending" banner
+7. **Admin** sees pending deposit in `/admin/deposits`, verifies on-chain, clicks Confirm
+8. On confirm: deposit status → `confirmed`, challenge row is auto-created for the trader
+
+**Wallet addresses (set in `.env.local`):**
 ```
-Dashboard page.tsx
-  └── on mount: supabase.auth.getUser()
-        ├── getActiveChallenge(userId)     → challenge state
-        ├── getUserPayouts(userId)          → payouts state
-        └── if challenge exists:
-              ├── getOpenTrades(challenge.id)        → trades state
-              ├── getEquitySnapshots(challenge.id)   → snapshots state
-              └── getTradeSummary(challenge.id)      → win rate, total P&L
-
-All helpers are in src/lib/db.ts
-All types are in src/types/database.ts
+PAYMENT_USDT_TRC20=placeholder_trc20_address
+PAYMENT_USDT_ERC20=placeholder_erc20_address
+PAYMENT_BTC=placeholder_btc_address
+PAYMENT_ETH=placeholder_eth_address
 ```
-
-If no challenge is found → shows "No Active Challenge" CTA with link to `/` (landing/pricing).
-If no equity snapshots → PerformanceChart shows **demo data** automatically.
 
 ---
 
-## 7. What's Done (Phases 1 & 2)
+## 7. Admin Panel
+
+**URL:** `/admin` and sub-routes  
+**Access:** `profiles.role = 'admin'` — set manually in Supabase DB  
+**Login:** Same login page as traders (`/login`) — after login, if role = admin, redirect to `/admin`
+
+**Pages:**
+| Route | Purpose |
+|---|---|
+| `/admin` | Stats dashboard: total revenue, active traders, pending payouts, pending deposits, challenges passed/failed |
+| `/admin/users` | All users: email, name, country, challenges count, status, ban/unban |
+| `/admin/challenges` | All challenges: view, edit phase/balance, add note, reset |
+| `/admin/payouts` | Approve/reject payout requests, paste tx hash |
+| `/admin/deposits` | Confirm/reject crypto deposit submissions, auto-creates challenge on confirm |
+
+**Layout:** Sidebar navigation (separate from main site navbar/footer)
+
+**Trader soft ban:** `profiles.is_banned = true` — they can log in but dashboard shows "Account suspended" banner, cannot request payouts.
+
+---
+
+## 8. What's Done (Phases 1 & 2)
 
 ### ✅ Phase 1 — Foundation
 - Landing page (hero, stats, how-it-works, testimonials)
 - Challenge configurator component (5 account sizes, interactive pricing)
 - Live payout feed marquee (mock data for now)
 - Supabase auth (login, signup, protected routes)
-- Navbar (auth-aware), Footer
+- Navbar (auth-aware, quick actions dropdown), Footer
 - FAQ page, Rules page
 
 ### ✅ Phase 2 — Real Dashboard
 - **PerformanceChart** — Recharts equity curve with range selector, gradient fill, custom tooltip
-- **ChallengeTracker** — Phase 1→2→3 stepper, profit progress bar, max drawdown + daily loss rule monitoring with warning/violation states
+- **ChallengeTracker** — Phase 1→2→3 stepper, profit progress bar, max drawdown + daily loss rule monitoring
 - **OpenPositions** — live trade table with BUY/SELL badges, P&L coloring, live indicator
 - **PayoutFlow** — payout request modal (USDT/BTC/wire), history table with status badges
-- **Dashboard page rebuilt** — all data loaded from Supabase, stat cards wired to real challenge data, no more hardcoded numbers
-- Full DB schema (`supabase_schema.sql`) with RLS
+- **Dashboard page rebuilt** — all data loaded from Supabase, stat cards wired to real challenge data
 
 ---
 
-## 8. What Needs to Be Built Next
+## 9. What Needs to Be Built Next
 
-### 🔴 Phase 3 — Revenue Layer (Build this first — it generates money)
+### 🔄 Phase 3 — In Progress
 
-#### A. Stripe Checkout
-- Install: `npm install stripe @stripe/stripe-js`
-- Add to `ChallengeConfigurator.tsx`: replace the `alert()` on "Start Challenge" with a call to `/api/checkout`
-- Create `src/app/api/checkout/route.ts` — Stripe Checkout session, price based on account size:
-  - $10K → $99, $25K → $199, $50K → $299, $100K → $499, $200K → $799
-- Create `src/app/api/webhooks/stripe/route.ts` — on `checkout.session.completed`, insert a row in `challenges` table for the buyer
-- Add env vars: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- Success redirect: `/dashboard?purchase=success`
+#### A. Checkout Flow (improve existing)
+- `/checkout` exists but tx hash submission needs wiring to `deposits` table
+- Dashboard needs "Payment Pending" banner when deposit is pending
+- Login redirect: `?redirect=` param support in `/login`
 
-#### B. Account Settings Page (`src/app/account/page.tsx`)
-Currently a stub. Build:
-- Profile section: full_name, country, avatar upload
-- Payout wallet section: wallet address, preferred method (USDT/BTC/Wire)
-- Security section: change password, 2FA hint
-- Save changes → upsert to `profiles` table
+#### B. Admin Panel ← **Build this next**
+- See Section 7 for full spec
+- Start with layout + dashboard stats, then deposits page (most critical for revenue)
 
-#### C. Admin Panel (`src/app/admin/page.tsx`)
-- Protected by checking `profiles.role = 'admin'` (add `role` column to profiles)
-- Tables: all challenges, pending payouts (approve/reject), all users
-- Approve payout → update `payouts.status = 'completed'`, add tx_hash
+#### C. Account Settings Page (`src/app/account/page.tsx`)
+- Profile: full_name, country, avatar upload
+- Payout wallet: address, preferred method
+- Security: change password
 
 ---
 
 ### 🟡 Phase 4 — Trader Experience
 
-#### A. Live Leaderboard (replace mock data)
-File: `src/app/leaderboard/page.tsx`
-- Query `challenges` table joined with `profiles`, order by `(current_balance - starting_balance) / starting_balance DESC`
-- Add filter tabs: This Week / This Month / All Time
-- Show: rank, name, account size, % gain, phase
+#### A. Live Leaderboard
+- Query `challenges` joined with `profiles`, order by % gain
+- Filter tabs: This Week / This Month / All Time
 
 #### B. Affiliate / Referral System
-- Add `referral_code` (unique, auto-generated) and `referred_by` columns to `profiles`
-- Add `affiliate_earnings` table: `{ id, affiliate_id, referred_user_id, amount, paid_at }`
-- Landing page: accept `?ref=CODE` query param, store in cookie
-- On Stripe webhook: if referral cookie present, credit 10% of challenge fee to affiliate
+- `referral_code` + `referred_by` on profiles
+- `affiliate_earnings` table
+- Landing page: `?ref=CODE` → cookie → credit on deposit confirm
 
 #### C. Trading Journal (`src/app/journal/page.tsx`)
-- New page with a form: symbol, direction, entry/exit, lot size, notes, emotion (dropdown), strategy tag
-- Inserts to `trades` table (already exists)
-- History table below with filters by date/symbol/direction
 
 ---
 
-### 🟢 Phase 5 — Growth & Moat
+### 🟢 Phase 5 — Growth
 
 #### A. FlowAcademy (`src/app/academy/page.tsx`)
-- Video lessons grid (embed YouTube or Vimeo)
-- Categories: Risk Management, Psychology, Strategy
-- Static content is fine to start
-
-#### B. Funded Certificate (PDF auto-generation)
-- When `challenges.status` changes to `'funded'`, generate a PDF certificate
-- Use `jsPDF` or a Supabase Edge Function
-- Add "Download Certificate" button to dashboard when funded
-
-#### C. Email Notifications (Supabase Edge Functions)
-- Trigger on: challenge purchase, payout processed, rule violation warning
-- Use Resend or SendGrid via Supabase Edge Function
+#### B. Funded Certificate (PDF generation on status = 'funded')
+#### C. Email Notifications (Supabase Edge Functions + Resend)
 
 ---
 
-## 9. Environment Variables Needed
+## 10. Environment Variables
 
 ```bash
 # .env.local
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key  # for admin API routes only
 
-# For Phase 3 (Stripe):
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
+# Crypto wallet addresses
+PAYMENT_USDT_TRC20=placeholder_trc20_address
+PAYMENT_USDT_ERC20=placeholder_erc20_address
+PAYMENT_BTC=placeholder_btc_address
+PAYMENT_ETH=placeholder_eth_address
 
 # For Phase 5 (Email):
 RESEND_API_KEY=re_...
@@ -275,52 +323,34 @@ RESEND_API_KEY=re_...
 
 ---
 
-## 10. Git Commit History
+## 11. Git Commit History
 
 ```
-9c08389  Phase 2: Real dashboard — performance chart, challenge tracker, open positions, payout flow
-79dd63a  Move Quick Navigation menu above Performance charts
-4d13232  Add Quick Navigation menu to dashboard with 9 action buttons
-5620714  Enhance dashboard with professional design inspired by reference
-c3571b9  Add complete authentication system with Supabase
-da61a4c  Fix Footer component: correct import icons and close Link tag
+(latest) Phase 3: Admin panel + crypto checkout flow
+5596221  Delete CNAME
+b78b963  Create CNAME
+4144a58  Add crypto checkout flow
+22781e9  Add AGENT_HANDOFF.md
+4ee7bf2  Phase 2: Real dashboard
 ```
 
 ---
 
-## 11. Known Issues / TODOs
+## 12. Known Issues / TODOs
 
 | Item | File | Priority |
 |---|---|---|
-| `LivePayoutFeed` uses hardcoded mock payout names/amounts | `src/components/LivePayoutFeed.tsx` | Medium |
+| Checkout tx hash submission not wired to DB | `src/app/checkout/page.tsx` | CRITICAL |
+| Admin panel not built | `src/app/admin/` | CRITICAL |
+| `LivePayoutFeed` uses hardcoded mock data | `src/components/LivePayoutFeed.tsx` | Medium |
 | Leaderboard uses hardcoded mock data | `src/app/leaderboard/page.tsx` | Medium |
 | Account settings page is a stub | `src/app/account/page.tsx` | High |
-| "Trade", "Withdraw", "Deposit", "Certificate" nav buttons on dashboard are unlinked | `src/app/dashboard/page.tsx` | Low |
-| No Stripe checkout — "Start Challenge" shows alert() | `src/components/ChallengeConfigurator.tsx` | CRITICAL |
-| No admin panel | — | High |
-| Google Fonts removed (blocked in build env) — site uses system fonts | `src/app/layout.tsx` | Low — re-add `next/font/google` locally |
-
----
-
-## 12. How to Re-add Google Fonts (Optional)
-
-The build environment blocks Google Fonts CDN. To restore locally:
-
-```tsx
-// src/app/layout.tsx — add back at top:
-import { Geist, Geist_Mono } from "next/font/google";
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-
-// Then on the <html> tag:
-<html className={`${geistSans.variable} ${geistMono.variable} h-full antialiased scroll-smooth`}>
-```
+| Login page doesn't support `?redirect=` param | `src/app/login/page.tsx` | High |
+| Google Fonts removed (blocked in build env) | `src/app/layout.tsx` | Low |
 
 ---
 
 ## 13. Prompt to Give a New Agent
-
-Copy-paste this to start a new session:
 
 ```
 I'm building FlowFunded — a prop trading firm platform at https://github.com/heisstrangewrld/flowfunded.git
@@ -329,9 +359,9 @@ Please clone the repo and read AGENT_HANDOFF.md first — it has the full contex
 
 Stack: Next.js 16, TypeScript, Tailwind CSS 4, Supabase, Recharts, Framer Motion.
 
-Phases 1 and 2 are complete (landing page, auth, real dashboard with performance chart, challenge tracker, payout flow).
+Phases 1 and 2 are complete. Phase 3 is in progress.
 
-Next priority is Phase 3 — Stripe checkout. When a user clicks "Start Challenge" on the landing page, it should create a Stripe checkout session and on payment success, insert a challenge row in Supabase for that user.
+Payment is crypto-only (USDT TRC20/ERC20, BTC, ETH) — manual confirmation by admin. No Stripe.
 
-Please read the AGENT_HANDOFF.md in the repo for full details before writing any code.
+Next priority: Admin panel (sidebar layout, /admin, /admin/users, /admin/challenges, /admin/payouts, /admin/deposits). See AGENT_HANDOFF.md Section 7 for full spec.
 ```

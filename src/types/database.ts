@@ -8,6 +8,8 @@ export interface Profile {
   country?: string;
   payout_wallet?: string;
   payout_method?: "crypto" | "bank";
+  role?: "user" | "admin";
+  is_banned?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -25,6 +27,7 @@ export interface Challenge {
   current_balance: number;
   peak_balance: number;
   platform: string;
+  admin_note?: string;
   created_at: string;
   updated_at: string;
 }
@@ -69,4 +72,21 @@ export interface Payout {
   processed_at?: string;
   tx_hash?: string;
   notes?: string;
+}
+
+export interface Deposit {
+  id: string;
+  user_id: string;
+  account_size: string;
+  fee: string;
+  coin: "USDT_TRC20" | "USDT_ERC20" | "BTC" | "ETH";
+  tx_hash: string;
+  amount_claimed: number;
+  status: "pending" | "confirmed" | "rejected";
+  admin_note?: string;
+  created_at: string;
+  confirmed_at?: string;
+  // joined fields for admin view
+  user_email?: string;
+  user_name?: string;
 }

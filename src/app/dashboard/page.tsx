@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import {
@@ -16,25 +16,65 @@ import type { Challenge, Trade, EquitySnapshot, Payout } from "@/types/database"
 import {
   LogOut, Trophy, Settings, BarChart3, Loader2, TrendingUp,
   Target, Activity, Zap, ArrowUpRight, ArrowDownRight,
-  Award, AlertCircle, BookOpen, DollarSign,
+  Award, AlertCircle, BookOpen, DollarSign, Clock, X,
 } from "lucide-react";
 import PerformanceChart from "@/components/dashboard/PerformanceChart";
 import ChallengeTracker from "@/components/dashboard/ChallengeTracker";
 import OpenPositions from "@/components/dashboard/OpenPositions";
 import PayoutFlow from "@/components/dashboard/PayoutFlow";
+import { Suspense } from "react";
 
 interface UserProfile {
   id: string;
   email: string;
   full_name?: string;
+  is_banned?: boolean;
 }
 
-export default function DashboardPage() {
+function PendingBanner({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-5 py-4 flex items-center gap-4 animate-fade-in-down">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-yellow-500/20 border border-yellow-500/30">
+        <Clock className="h-5 w-5 text-yellow-400" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-yellow-300">Payment Under Review</p>
+        <p className="text-xs text-yellow-400/70 mt-0.5">
+          Your crypto payment has been submitted. We&apos;ll activate your challenge within a few hours after verifying your transaction on-chain.
+        </p>
+      </div>
+      <button
+        onClick={onDismiss}
+        className="shrink-0 p-1.5 rounded-lg text-yellow-400/60 hover:text-yellow-400 hover:bg-yellow-500/10 transition-all"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+function BannedBanner() {
+  return (
+    <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-4 flex items-center gap-4">
+      <AlertCircle className="h-6 w-6 text-red-400 shrink-0" />
+      <div>
+        <p className="text-sm font-semibold text-red-300">Account Suspended</p>
+        <p className="text-xs text-red-400/70 mt-0.5">
+          Your account has been suspended. Please contact support for assistance.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function DashboardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const paymentPending = searchParams.get("payment") === "pending";
+
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Data state
+  const [showPendingBanner, setShowPendingBanner] = useState(paymentPending);
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [trades, setTrades] = useState<Trade[]>([]);
   const [snapshots, setSnapshots] = useState<EquitySnapshot[]>([]);
@@ -49,10 +89,8 @@ export default function DashboardPage() {
         getActiveChallenge(userId),
         getUserPayouts(userId),
       ]);
-
       setChallenge(activeChallenge);
       setPayouts(userPayouts);
-
       if (activeChallenge) {
         const [openTrades, equityData, summary] = await Promise.all([
           getOpenTrades(activeChallenge.id),
@@ -75,12 +113,23 @@ export default function DashboardPage() {
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser) { router.push("/login"); return; }
-        const profile = {
+
+        // Fetch profile for ban status
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, is_banned, role")
+          .eq("id", authUser.id)
+          .single();
+
+        // Redirect admin to admin panel
+        if (profile?.role === "admin") { router.push("/admin"); return; }
+
+        setUser({
           id: authUser.id,
           email: authUser.email || "",
-          full_name: authUser.user_metadata?.full_name || "Trader",
-        };
-        setUser(profile);
+          full_name: profile?.full_name || authUser.user_metadata?.full_name || "Trader",
+          is_banned: profile?.is_banned ?? false,
+        });
         await loadDashboardData(authUser.id);
       } catch {
         router.push("/login");
@@ -90,6 +139,20 @@ export default function DashboardPage() {
     };
     checkAuth();
   }, [router, loadDashboardData]);
+
+  // Also check if there's a pending deposit
+  useEffect(() => {
+    if (!user?.id || showPendingBanner) return;
+    supabase
+      .from("deposits")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .limit(1)
+      .then(({ data }) => {
+        if (data && data.length > 0) setShowPendingBanner(true);
+      });
+  }, [user?.id, showPendingBanner]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -104,7 +167,6 @@ export default function DashboardPage() {
     );
   }
 
-  // Derived stats
   const balance = challenge?.current_balance ?? 0;
   const startingBalance = challenge?.starting_balance ?? 0;
   const totalPnl = balance - startingBalance;
@@ -112,50 +174,20 @@ export default function DashboardPage() {
   const isPositive = totalPnl >= 0;
 
   const statCards = [
-    {
-      label: "Account Balance",
-      value: balance > 0 ? `$${balance.toLocaleString()}` : "—",
-      sub: challenge ? `$${startingBalance.toLocaleString()} start` : "No active challenge",
-      icon: BarChart3,
-      iconBg: "bg-primary/10",
-      iconColor: "text-primary",
-    },
-    {
-      label: "Active Challenges",
-      value: challenge ? "1" : "0",
-      sub: challenge ? `Phase ${challenge.phase} • ${challenge.status}` : "Start a challenge",
-      icon: Trophy,
-      iconBg: "bg-secondary/10",
-      iconColor: "text-secondary",
-    },
-    {
-      label: "Total P&L",
-      value: totalPnl !== 0 ? `${isPositive ? "+" : ""}$${Math.abs(totalPnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—",
-      sub: totalPnlPct !== 0 ? `${isPositive ? "+" : ""}${totalPnlPct.toFixed(2)}% return` : "No data yet",
-      icon: TrendingUp,
-      iconBg: "bg-emerald-500/10",
-      iconColor: "text-emerald-400",
-      valueColor: isPositive ? "text-emerald-400" : "text-red-400",
-    },
-    {
-      label: "Win Rate",
-      value: tradeSummary.total > 0 ? `${tradeSummary.winRate.toFixed(1)}%` : "—",
-      sub: tradeSummary.total > 0 ? `${tradeSummary.winners}/${tradeSummary.total} trades won` : "No closed trades",
-      icon: Target,
-      iconBg: "bg-blue-500/10",
-      iconColor: "text-blue-400",
-    },
+    { label: "Account Balance", value: balance > 0 ? `$${balance.toLocaleString()}` : "—", sub: challenge ? `$${startingBalance.toLocaleString()} start` : "No active challenge", icon: BarChart3, iconBg: "bg-primary/10", iconColor: "text-primary" },
+    { label: "Active Challenges", value: challenge ? "1" : "0", sub: challenge ? `Phase ${challenge.phase} • ${challenge.status}` : "Start a challenge", icon: Trophy, iconBg: "bg-secondary/10", iconColor: "text-secondary" },
+    { label: "Total P&L", value: totalPnl !== 0 ? `${isPositive ? "+" : ""}$${Math.abs(totalPnl).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "—", sub: totalPnlPct !== 0 ? `${isPositive ? "+" : ""}${totalPnlPct.toFixed(2)}% return` : "No data yet", icon: TrendingUp, iconBg: "bg-emerald-500/10", iconColor: "text-emerald-400", valueColor: isPositive ? "text-emerald-400" : "text-red-400" },
+    { label: "Win Rate", value: tradeSummary.total > 0 ? `${tradeSummary.winRate.toFixed(1)}%` : "—", sub: tradeSummary.total > 0 ? `${tradeSummary.winners}/${tradeSummary.total} trades won` : "No closed trades", icon: Target, iconBg: "bg-blue-500/10", iconColor: "text-blue-400" },
   ];
 
   return (
     <div className="relative min-h-screen bg-background pt-24 pb-24">
-      {/* Background glows */}
       <div className="absolute top-0 right-1/4 -z-10 h-[500px] w-[500px] rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-10 left-1/3 -z-10 h-[500px] w-[500px] rounded-full bg-secondary/5 blur-[120px] pointer-events-none" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-6 animate-fade-in-up">
           <div>
             <h1 className="text-4xl font-extrabold text-white">Dashboard</h1>
             <p className="text-gray-400 mt-1">
@@ -163,39 +195,32 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Link
-              href="/account"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-all text-sm"
-            >
-              <Settings className="h-4 w-4" />
-              Settings
+            <Link href="/account" className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-all text-sm">
+              <Settings className="h-4 w-4" /> Settings
             </Link>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:border-primary/50 transition-all text-sm"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
+            <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:border-primary/50 transition-all text-sm">
+              <LogOut className="h-4 w-4" /> Sign Out
             </button>
           </div>
         </div>
+
+        {/* Banners */}
+        {user?.is_banned && <BannedBanner />}
+        {showPendingBanner && !user?.is_banned && (
+          <PendingBanner onDismiss={() => setShowPendingBanner(false)} />
+        )}
 
         {/* Stat Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {statCards.map((stat, idx) => {
             const Icon = stat.icon;
             return (
-              <div
-                key={idx}
-                className="rounded-xl glass-panel p-5 border border-white/5 hover:border-white/10 transition-all"
-              >
+              <div key={idx} className={`rounded-xl glass-panel p-5 border border-white/5 hover:border-white/10 transition-all scroll-reveal stagger-${idx + 1}`} data-reveal>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{stat.label}</span>
-                  <div className={`${stat.iconBg} p-2 rounded-lg`}>
-                    <Icon className={`h-4 w-4 ${stat.iconColor}`} />
-                  </div>
+                  <div className={`${stat.iconBg} p-2 rounded-lg`}><Icon className={`h-4 w-4 ${stat.iconColor}`} /></div>
                 </div>
-                <p className={`text-2xl font-bold mt-1 ${stat.valueColor ?? "text-white"}`}>{stat.value}</p>
+                <p className={`text-2xl font-bold mt-1 ${(stat as { valueColor?: string }).valueColor ?? "text-white"}`}>{stat.value}</p>
                 <p className="text-xs text-gray-500 mt-1">{stat.sub}</p>
               </div>
             );
@@ -203,7 +228,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Nav */}
-        <div className="mb-8">
+        <div className="mb-8 scroll-reveal" data-reveal>
           <div className="flex flex-wrap gap-2">
             {[
               { label: "Trade", icon: TrendingUp, color: "text-primary border-primary/20 hover:border-primary/50 hover:bg-primary/5" },
@@ -217,53 +242,36 @@ export default function DashboardPage() {
             ].map((item) => {
               const Icon = item.icon;
               const cls = `flex items-center gap-2 px-4 py-2 rounded-full border bg-white/[0.02] text-sm font-semibold transition-all ${item.color}`;
-              return item.href ? (
-                <Link key={item.label} href={item.href} className={cls}>
-                  <Icon className="h-4 w-4" />{item.label}
-                </Link>
+              return (item as { href?: string }).href ? (
+                <Link key={item.label} href={(item as { href: string }).href} className={cls}><Icon className="h-4 w-4" />{item.label}</Link>
               ) : (
-                <button key={item.label} className={cls}>
-                  <Icon className="h-4 w-4" />{item.label}
-                </button>
+                <button key={item.label} className={cls} disabled={!!user?.is_banned}><Icon className="h-4 w-4" />{item.label}</button>
               );
             })}
           </div>
         </div>
 
         {/* No Challenge CTA */}
-        {!dataLoading && !challenge && (
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-8 mb-8 text-center">
+        {!dataLoading && !challenge && !showPendingBanner && (
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-8 mb-8 text-center scroll-reveal" data-reveal>
             <Activity className="h-12 w-12 text-primary/40 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-white mb-2">No Active Challenge</h3>
-            <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
-              Purchase a challenge to start tracking your performance, risk metrics, and path to funding.
-            </p>
-            <Link
-              href="/#challenges"
-              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-black bg-primary rounded-full hover:bg-primary/95 transition-all shadow-[0_0_20px_rgba(0,240,255,0.3)]"
-            >
+            <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">Purchase a challenge to start tracking your performance, risk metrics, and path to funding.</p>
+            <Link href="/#challenges" className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-black bg-primary rounded-full hover:bg-primary/95 transition-all shadow-[0_0_20px_rgba(0,240,255,0.3)]">
               <Trophy className="h-4 w-4" /> Start a Challenge
             </Link>
           </div>
         )}
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Performance Chart — takes 2 cols */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 scroll-reveal" data-reveal>
           <div className="lg:col-span-2 rounded-xl glass-panel border border-white/5 p-6">
             {dataLoading ? (
-              <div className="h-80 flex items-center justify-center">
-                <Loader2 className="h-6 w-6 text-primary animate-spin" />
-              </div>
+              <div className="h-80 flex items-center justify-center"><Loader2 className="h-6 w-6 text-primary animate-spin" /></div>
             ) : (
-              <PerformanceChart
-                snapshots={snapshots}
-                startingBalance={challenge?.starting_balance ?? 50000}
-              />
+              <PerformanceChart snapshots={snapshots} startingBalance={challenge?.starting_balance ?? 50000} />
             )}
           </div>
-
-          {/* Portfolio Summary */}
           <div className="rounded-xl glass-panel border border-white/5 p-6">
             <h2 className="text-lg font-bold text-white mb-5">Portfolio</h2>
             <div className="space-y-3">
@@ -281,8 +289,6 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-
-            {/* Trade Stats */}
             {tradeSummary.total > 0 && (
               <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-2 gap-3">
                 <div className="text-center p-3 bg-white/[0.03] rounded-xl">
@@ -295,43 +301,29 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
-
-            {/* Start Challenge CTA if no challenge */}
             {!dataLoading && !challenge && (
-              <Link
-                href="/#challenges"
-                className="mt-5 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm font-semibold hover:bg-primary/20 transition-all"
-              >
+              <Link href="/#challenges" className="mt-5 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm font-semibold hover:bg-primary/20 transition-all">
                 <Trophy className="h-4 w-4" /> Get Started
               </Link>
             )}
           </div>
         </div>
 
-        {/* Challenge Tracker (only if active challenge) */}
         {!dataLoading && challenge && (
-          <div className="mb-8">
+          <div className="mb-8 scroll-reveal" data-reveal>
             <ChallengeTracker challenge={challenge} todayPnl={0} />
           </div>
         )}
 
-        {/* Open Positions */}
-        <div className="mb-8">
+        <div className="mb-8 scroll-reveal" data-reveal>
           <OpenPositions trades={trades} loading={dataLoading} />
         </div>
 
-        {/* Payout Flow */}
-        <div className="mb-8">
-          <PayoutFlow
-            payouts={payouts}
-            challenge={challenge}
-            userId={user?.id ?? ""}
-            onNewPayout={(p) => setPayouts((prev) => [p, ...prev])}
-          />
+        <div className="mb-8 scroll-reveal" data-reveal>
+          <PayoutFlow payouts={payouts} challenge={challenge} userId={user?.id ?? ""} onNewPayout={(p) => setPayouts((prev) => [p, ...prev])} />
         </div>
 
-        {/* Bottom Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 scroll-reveal" data-reveal>
           <Link href="/#challenges" className="group rounded-xl glass-panel border border-white/5 p-6 hover:border-primary/50 transition-all hover:bg-primary/5">
             <div className="flex items-center gap-3 mb-3">
               <div className="h-10 w-10 rounded-lg bg-primary/10 border border-primary/20 group-hover:border-primary/50 flex items-center justify-center transition-all">
@@ -341,7 +333,6 @@ export default function DashboardPage() {
             </div>
             <p className="text-sm text-gray-400">Start a new evaluation. Account sizes from $10K to $200K.</p>
           </Link>
-
           <Link href="/account" className="group rounded-xl glass-panel border border-white/5 p-6 hover:border-secondary/50 transition-all hover:bg-secondary/5">
             <div className="flex items-center gap-3 mb-3">
               <div className="h-10 w-10 rounded-lg bg-secondary/10 border border-secondary/20 group-hover:border-secondary/50 flex items-center justify-center transition-all">
@@ -354,5 +345,13 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 text-primary animate-spin" /></div>}>
+      <DashboardContent />
+    </Suspense>
   );
 }
