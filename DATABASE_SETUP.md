@@ -1,7 +1,7 @@
 # Database Schema & API Documentation
 
 ## Overview
-This document describes the FlowFunded database schema, API endpoints, and setup instructions.
+This document describes the Fluxfunded database schema, API endpoints, and setup instructions.
 
 ## Database Setup Instructions
 

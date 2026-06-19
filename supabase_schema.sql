@@ -1,4 +1,4 @@
--- FlowFunded Phase 2 Database Schema
+-- Fluxfunded Phase 2 Database Schema
 -- Run this in your Supabase SQL Editor
 
 -- ─── PROFILES ────────────────────────────────────────────────────────────────

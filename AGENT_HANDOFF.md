@@ -1,11 +1,11 @@
-# FlowFunded — Agent Handoff Document
+# Fluxfunded — Agent Handoff Document
 > Last updated: June 2026 | Status: Phase 3 In Progress 🔄
 
 This document gives a new agent (Claude or otherwise) everything needed to understand the codebase and continue building without any prior conversation context.
 
 ---
 
-## 1. What Is FlowFunded?
+## 1. What Is Fluxfunded?
 
 A **proprietary trading firm platform** — traders pay to take evaluation challenges, prove their skill, and get funded with simulated capital up to $200K. They keep 80–90% of profits.
 
@@ -19,15 +19,15 @@ A **proprietary trading firm platform** — traders pay to take evaluation chall
 - Recharts (performance charts)
 - Lucide React (icons)
 
-**Repo:** `https://github.com/heisstrangewrld/flowfunded.git`
+**Repo:** `https://github.com/heisstrangewrld/fluxfunded.git`
 
 ---
 
 ## 2. How to Run Locally
 
 ```bash
-git clone https://github.com/heisstrangewrld/flowfunded.git
-cd flowfunded
+git clone https://github.com/heisstrangewrld/fluxfunded.git
+cd fluxfunded
 npm install
 
 # Create .env.local with your Supabase credentials + wallet addresses:
@@ -49,7 +49,7 @@ npm run dev
 ## 3. Full Project File Structure
 
 ```
-flowfunded/
+fluxfunded/
 ├── supabase_schema.sql          ← DB migration (run this in Supabase SQL Editor)
 ├── AUTHENTICATION_SETUP.md      ← Supabase auth setup guide
 ├── AGENT_HANDOFF.md             ← This file
@@ -192,7 +192,7 @@ UPDATE public.profiles SET role = 'admin' WHERE id = 'YOUR-USER-UUID';
 
 ## 6. Payment System — Crypto Only (No Stripe)
 
-FlowFunded uses **manual crypto payments only**. No payment processor is integrated.
+Fluxfunded uses **manual crypto payments only**. No payment processor is integrated.
 
 **Supported coins:**
 - USDT (TRC20)
@@ -297,7 +297,7 @@ PAYMENT_ETH=placeholder_eth_address
 
 ### 🟢 Phase 5 — Growth
 
-#### A. FlowAcademy (`src/app/academy/page.tsx`)
+#### A. FluxAcademy (`src/app/academy/page.tsx`)
 #### B. Funded Certificate (PDF generation on status = 'funded')
 #### C. Email Notifications (Supabase Edge Functions + Resend)
 
@@ -353,7 +353,7 @@ b78b963  Create CNAME
 ## 13. Prompt to Give a New Agent
 
 ```
-I'm building FlowFunded — a prop trading firm platform at https://github.com/heisstrangewrld/flowfunded.git
+I'm building Fluxfunded — a prop trading firm platform at https://github.com/heisstrangewrld/fluxfunded.git
 
 Please clone the repo and read AGENT_HANDOFF.md first — it has the full context, file structure, design system, and what needs to be built next.
 

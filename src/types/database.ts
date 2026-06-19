@@ -1,4 +1,4 @@
-// FlowFunded Database Types
+// Fluxfunded Database Types
 
 export interface Profile {
   id: string;

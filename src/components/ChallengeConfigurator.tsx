@@ -109,7 +109,7 @@ export default function ChallengeConfigurator() {
           </div>
           <div>
             <h4 className="text-lg font-bold text-white mb-2">What is included:</h4>
-            <p className="text-xs text-gray-400 mb-6">Gain access to the FlowFunded elite simulator and challenge suite.</p>
+            <p className="text-xs text-gray-400 mb-6">Gain access to the Fluxfunded elite simulator and challenge suite.</p>
             <ul className="space-y-4">
               {[
                 "Evaluation stage access",

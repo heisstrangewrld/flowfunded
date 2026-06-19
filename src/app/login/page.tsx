@@ -54,10 +54,10 @@ function LoginForm() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 group-hover:border-primary/50 transition-all duration-300">
               <Activity className="h-5 w-5 text-primary" />
             </div>
-            <span className="text-xl font-bold text-white">Flow<span className="text-primary">Funded</span></span>
+            <span className="text-xl font-bold text-white">Flux<span className="text-primary">funded</span></span>
           </Link>
           <h1 className="text-3xl font-extrabold text-white mb-2">Sign In</h1>
-          <p className="text-gray-400">Access your FlowFunded trading account</p>
+          <p className="text-gray-400">Access your Fluxfunded trading account</p>
         </div>
 
         <form onSubmit={handleLogin} className="rounded-2xl glass-panel p-8 space-y-6">

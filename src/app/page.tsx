@@ -53,7 +53,7 @@ export default function Home() {
           <div className="mt-16 border-t border-white/5 pt-10 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto text-gray-500">
             <div className="flex flex-col items-center">
               <span className="text-xs uppercase tracking-widest text-gray-600">Simulated Broker</span>
-              <span className="text-sm font-bold text-white mt-1">FlowBroker Pro</span>
+              <span className="text-sm font-bold text-white mt-1">FluxBroker Pro</span>
             </div>
             <div className="flex flex-col items-center">
               <span className="text-xs uppercase tracking-widest text-gray-600">Platform Support</span>
@@ -144,7 +144,7 @@ export default function Home() {
               {
                 step: "04",
                 title: "Receive Funding",
-                desc: "Become a FlowFunded partner. Trade with simulated capital and scale up to $2M.",
+                desc: "Become a Fluxfunded partner. Trade with simulated capital and scale up to $2M.",
                 icon: Award,
               },
             ].map((step, idx) => (
@@ -178,7 +178,7 @@ export default function Home() {
                 Reliable Payouts, Every Single Bi-Week
               </h2>
               <p className="text-gray-400 mt-6 leading-relaxed">
-                At FlowFunded, we know that nothing is more important to a trader than receiving payouts on time. We have built an automated processing system that triggers crypto and wire payouts immediately when you qualify.
+                At Fluxfunded, we know that nothing is more important to a trader than receiving payouts on time. We have built an automated processing system that triggers crypto and wire payouts immediately when you qualify.
               </p>
               
               <ul className="mt-8 space-y-4 text-sm text-gray-300">
@@ -202,7 +202,7 @@ export default function Home() {
                 <Activity className="h-48 w-48 text-primary" />
               </div>
               <p className="text-base text-gray-300 italic relative z-10">
-                &ldquo;FlowFunded completely changed my trading journey. The dashboard has some of the cleanest metrics I have ever seen, and my first payout of $8,450 was processed and sent to my crypto wallet in less than two hours. Scaling rules are simple and fair.&rdquo;
+                &ldquo;Fluxfunded completely changed my trading journey. The dashboard has some of the cleanest metrics I have ever seen, and my first payout of $8,450 was processed and sent to my crypto wallet in less than two hours. Scaling rules are simple and fair.&rdquo;
               </p>
               <div className="flex items-center gap-4 mt-8">
                 <div className="h-12 w-12 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center font-bold text-white">

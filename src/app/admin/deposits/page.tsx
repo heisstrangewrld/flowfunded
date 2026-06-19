@@ -76,7 +76,7 @@ export default function AdminDepositsPage() {
           starting_balance: sizeNum,
           current_balance: sizeNum,
           peak_balance: sizeNum,
-          platform: "FlowFunded MT5",
+          platform: "Fluxfunded MT5",
         });
       }
 

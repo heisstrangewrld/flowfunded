@@ -6,7 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
-  title: "FlowFunded | Next-Gen Prop Firm - Trade Up to $2,000,000 Capital",
+  title: "Fluxfunded | Next-Gen Prop Firm - Trade Up to $2,000,000 Capital",
   description:
     "Pass our evaluation challenge, verify your consistency, and trade with simulated capital up to $2,000,000. Keep up to 90% of your gains.",
 };

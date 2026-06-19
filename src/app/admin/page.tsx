@@ -85,7 +85,7 @@ export default function AdminDashboard() {
     <div className="space-y-8 animate-fade-in-up">
       <div>
         <h1 className="text-3xl font-extrabold text-white">Admin Dashboard</h1>
-        <p className="text-gray-400 mt-1 text-sm">Overview of FlowFunded platform activity</p>
+        <p className="text-gray-400 mt-1 text-sm">Overview of Fluxfunded platform activity</p>
       </div>
 
       {/* Urgent alerts */}

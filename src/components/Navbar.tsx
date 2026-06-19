@@ -62,7 +62,7 @@ export default function Navbar() {
                 <Activity className="h-5 w-5 text-primary animate-pulse" />
               </div>
               <span className="text-xl font-bold tracking-tight text-white">
-                Flow<span className="text-primary text-neon-glow">Funded</span>
+                Flux<span className="text-primary text-neon-glow">funded</span>
               </span>
             </Link>
           </div>

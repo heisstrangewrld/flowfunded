@@ -1,14 +1,14 @@
-# FlowFunded Authentication Setup Guide
+# Fluxfunded Authentication Setup Guide
 
 ## Quick Start with Supabase
 
-This guide will help you set up Supabase for the FlowFunded authentication system.
+This guide will help you set up Supabase for the Fluxfunded authentication system.
 
 ### Step 1: Create a Supabase Project
 
 1. Go to [https://supabase.com](https://supabase.com) and sign up for a free account
 2. Click "New Project" and fill in the details:
-   - **Project Name**: flowfunded (or your preferred name)
+   - **Project Name**: fluxfunded (or your preferred name)
    - **Database Password**: Create a strong password and save it
    - **Region**: Choose the region closest to your users
    - **Pricing Plan**: Free tier is fine for development
@@ -210,5 +210,5 @@ For help with Supabase:
 - [Supabase Docs](https://supabase.com/docs)
 - [Supabase Community Discord](https://discord.supabase.com)
 
-For FlowFunded auth issues:
-- Email: support@flowfunded.com
+For Fluxfunded auth issues:
+- Email: support@fluxfunded.com

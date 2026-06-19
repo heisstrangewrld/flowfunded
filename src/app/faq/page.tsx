@@ -13,8 +13,8 @@ const faqData: FAQItem[] = [
   // General
   {
     category: "General",
-    question: "What is FlowFunded?",
-    answer: "FlowFunded is a premier proprietary trading firm evaluation platform. We identify talented traders and provide them with simulated credentials, analytics, and scaling opportunities up to $2,000,000 in simulated capital. Consistent traders are rewarded with profit splits of up to 90% of virtual gains.",
+    question: "What is Fluxfunded?",
+    answer: "Fluxfunded is a premier proprietary trading firm evaluation platform. We identify talented traders and provide them with simulated credentials, analytics, and scaling opportunities up to $2,000,000 in simulated capital. Consistent traders are rewarded with profit splits of up to 90% of virtual gains.",
   },
   {
     category: "General",
@@ -34,7 +34,7 @@ const faqData: FAQItem[] = [
   {
     category: "General",
     question: "What is the minimum age requirement?",
-    answer: "You must be at least 18 years old and possess valid government-issued identification to sign up for FlowFunded challenges and pass KYC checks.",
+    answer: "You must be at least 18 years old and possess valid government-issued identification to sign up for Fluxfunded challenges and pass KYC checks.",
   },
 
   // Evaluation
@@ -136,7 +136,7 @@ const faqData: FAQItem[] = [
   },
   {
     category: "Scaling",
-    question: "Are taxes handled by FlowFunded?",
+    question: "Are taxes handled by Fluxfunded?",
     answer: "No. As an independent contractor, you are responsible for paying any taxes on your profit splits in accordance with your local tax laws. We issue tax statements upon request.",
   },
 ];

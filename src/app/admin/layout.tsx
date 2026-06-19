@@ -56,7 +56,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Activity className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <p className="text-sm font-bold text-white">FlowFunded</p>
+          <p className="text-sm font-bold text-white">Fluxfunded</p>
           <p className="text-[10px] text-primary font-semibold uppercase tracking-widest">Admin Panel</p>
         </div>
       </div>

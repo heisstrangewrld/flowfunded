@@ -63,7 +63,7 @@ export default function SignupPage() {
             </div>
           </Link>
           <h1 className="text-3xl font-extrabold text-white mb-2">Create Account</h1>
-          <p className="text-gray-400">Join FlowFunded and start trading today</p>
+          <p className="text-gray-400">Join Fluxfunded and start trading today</p>
         </div>
 
         {/* Signup Form */}

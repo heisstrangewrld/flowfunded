@@ -15,7 +15,7 @@ export default function Footer() {
                 <Activity className="h-4.5 w-4.5 text-primary" />
               </div>
               <span className="text-lg font-bold tracking-tight text-white">
-                Flow<span className="text-primary">Funded</span>
+                Flux<span className="text-primary">funded</span>
               </span>
             </Link>
             <p className="text-sm text-gray-500 max-w-xs">
@@ -96,7 +96,7 @@ export default function Footer() {
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Support</h3>
             <ul className="space-y-2.5 text-sm">
               <li className="text-sm text-gray-500">
-                Email: <a href="mailto:support@flowfunded.com" className="text-gray-400 hover:text-white transition-colors">support@flowfunded.com</a>
+                Email: <a href="mailto:support@fluxfunded.com" className="text-gray-400 hover:text-white transition-colors">support@fluxfunded.com</a>
               </li>
               <li>
                 <a href="#" className="hover:text-white transition-colors duration-200">
@@ -120,14 +120,14 @@ export default function Footer() {
         {/* Regulatory Disclaimers & Copyright */}
         <div className="border-t border-white/5 pt-8 text-xs text-gray-600 flex flex-col gap-6">
           <p className="leading-relaxed">
-            <strong>Disclaimer:</strong> FlowFunded offers educational and evaluation services. All activities on the platform are simulated and take place within a virtual environment. No real funds are managed or deposited into brokerage markets. Evaluation challenges, verifications, and scaling targets do not represent actual market trading accounts, and references to capital size reflect hypothetical parameters. Profit splits are paid based on performance within virtual environments.
+            <strong>Disclaimer:</strong> Fluxfunded offers educational and evaluation services. All activities on the platform are simulated and take place within a virtual environment. No real funds are managed or deposited into brokerage markets. Evaluation challenges, verifications, and scaling targets do not represent actual market trading accounts, and references to capital size reflect hypothetical parameters. Profit splits are paid based on performance within virtual environments.
           </p>
           <p className="leading-relaxed">
             Hypothetical or simulated performance results have certain limitations. Unlike an actual performance record, simulated results do not represent actual trading. Also, since the trades have not been executed, the results may have under-or-over compensated for the impact, if any, of certain market factors, such as lack of liquidity.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/5 pt-6 mt-2">
             <span className="text-gray-500">
-              &copy; {currentYear} FlowFunded. All rights reserved. Built for elite traders.
+              &copy; {currentYear} Fluxfunded. All rights reserved. Built for elite traders.
             </span>
             <div className="flex gap-6 text-gray-500">
               <span>Risk Warning</span>
